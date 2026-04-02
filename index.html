@@ -199,6 +199,12 @@
             border-color: rgba(139, 92, 246, .3)
         }
 
+        .day-cell.type-holiday {
+            background: rgba(241, 245, 249, .8);
+            border-color: rgba(241, 245, 249, .8);
+            color: #94a3b8
+        }
+
         .popup {
             margin-top: 12px;
             padding: 16px;
@@ -463,7 +469,8 @@
             { value: 'normal', label: 'يوم عادي', hours: 8, meal: 45, cls: 't-normal', icon: '☀️' },
             { value: 'overtime', label: 'ساعات إضافية', hours: 12, meal: 90, cls: 't-overtime', icon: '🕐' },
             { value: 'extra', label: 'يوم إضافي', hours: 8, meal: 45, cls: 't-extra', icon: '⭐' },
-            { value: 'extra-overtime', label: 'إضافي + ساعات', hours: 12, meal: 90, cls: 't-extra-overtime', icon: '⚡' }
+            { value: 'extra-overtime', label: 'إضافي + ساعات', hours: 12, meal: 90, cls: 't-extra-overtime', icon: '⚡' },
+            { value: 'holiday', label: 'إجازة', hours: 0, meal: 0, cls: 't-holiday', icon: '🌴' }
         ];
         const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
         const WDAYS = ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
