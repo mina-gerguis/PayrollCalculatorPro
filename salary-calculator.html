@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة المرتب الشهري</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f5f7fa;
+            color: #1e293b;
+            padding: 16px
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto
+        }
+
+        h1 {
+            text-align: center;
+            background: rgba(59, 130, 246, .1);
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 16px;
+            color: #2563eb;
+            margin: 0 auto 20px;
+            font-size: 1.5rem
+        }
+
+        .center {
+            text-align: center
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .06)
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #1e293b
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .nav button {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px
+        }
+
+        .nav button:hover {
+            background: #f1f5f9
+        }
+
+        .nav span {
+            font-weight: 600
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px
+        }
+
+        @media(min-width:640px) {
+            .legend {
+                grid-template-columns: repeat(4, 1fr)
+            }
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid;
+            font-size: .85rem
+        }
+
+        .legend-item .price {
+            margin-right: auto;
+            font-size: .75rem;
+            color: #64748b
+        }
+
+        .t-normal {
+            background: rgba(59, 130, 246, .08);
+            border-color: rgba(59, 130, 246, .3);
+            color: #2563eb
+        }
+
+        .t-overtime {
+            background: rgba(234, 179, 8, .08);
+            border-color: rgba(234, 179, 8, .3);
+            color: #b45309
+        }
+
+        .t-extra {
+            background: rgba(16, 185, 129, .08);
+            border-color: rgba(16, 185, 129, .3);
+            color: #047857
+        }
+
+        .t-extra-overtime {
+            background: rgba(139, 92, 246, .08);
+            border-color: rgba(139, 92, 246, .3);
+            color: #7c3aed
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 4px
+        }
+
+        .weekdays div {
+            text-align: center;
+            font-size: .75rem;
+            color: #64748b;
+            padding: 4px
+        }
+
+        .cal {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px
+        }
+
+        .day-cell {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            min-height: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: .15s;
+            font-size: .85rem;
+            font-weight: 600
+        }
+
+        .day-cell:hover {
+            background: #f1f5f9
+        }
+
+        .day-cell.selected {
+            outline: 2px solid #2563eb;
+            outline-offset: 1px;
+            transform: scale(1.05)
+        }
+
+        .day-cell .icon {
+            font-size: .7rem;
+            margin-top: 2px
+        }
+
+        .day-cell.type-normal {
+            background: rgba(59, 130, 246, .1);
+            border-color: rgba(59, 130, 246, .3)
+        }
+
+        .day-cell.type-overtime {
+            background: rgba(234, 179, 8, .1);
+            border-color: rgba(234, 179, 8, .3)
+        }
+
+        .day-cell.type-extra {
+            background: rgba(16, 185, 129, .1);
+            border-color: rgba(16, 185, 129, .3)
+        }
+
+        .day-cell.type-extra-overtime {
+            background: rgba(139, 92, 246, .1);
+            border-color: rgba(139, 92, 246, .3)
+        }
+
+        .popup {
+            margin-top: 12px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: #fff;
+            display: none
+        }
+
+        .popup.show {
+            display: block
+        }
+
+        .popup p {
+            font-size: .85rem;
+            color: #64748b;
+            margin-bottom: 10px
+        }
+
+        .popup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px
+        }
+
+        .popup-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            background: none;
+            text-align: right;
+            transition: .15s
+        }
+
+        .popup-btn:hover {
+            border-color: #94a3b8
+        }
+
+        .popup-btn.active {
+            border-color: currentColor;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .1)
+        }
+
+        .popup-btn .name {
+            font-weight: 600;
+            font-size: .85rem
+        }
+
+        .popup-btn .detail {
+            font-size: .7rem;
+            color: #64748b
+        }
+
+        .counts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px
+        }
+
+        @media(min-width:640px) {
+            .counts {
+                grid-template-columns: repeat(4, 1fr)
+            }
+        }
+
+        .count-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid
+        }
+
+        .count-card .num {
+            font-size: 1.2rem;
+            font-weight: 700
+        }
+
+        .count-card .lbl {
+            font-size: .75rem;
+            color: #64748b
+        }
+
+        .extras {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px
+        }
+
+        @media(min-width:640px) {
+            .extras {
+                grid-template-columns: repeat(3, 1fr)
+            }
+        }
+
+        .extras label {
+            font-size: .85rem;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px
+        }
+
+        .extras input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            direction: ltr;
+            text-align: left
+        }
+
+        .totals {
+            background: rgba(59, 130, 246, .05);
+            border-color: rgba(59, 130, 246, .3)
+        }
+
+        .totals .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: .95rem
+        }
+
+        .totals .grand {
+            border-top: 1px solid rgba(59, 130, 246, .2);
+            padding-top: 10px;
+            margin-top: 8px
+        }
+
+        .totals .grand span {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2563eb
+        }
+
+        .all-total {
+            background: rgba(16, 185, 129, .05);
+            border-color: rgba(16, 185, 129, .3)
+        }
+
+        .all-total .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: .95rem
+        }
+
+        .all-total .grand {
+            border-top: 1px solid rgba(16, 185, 129, .2);
+            padding-top: 10px;
+            margin-top: 8px
+        }
+
+        .all-total .grand span {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #047857
+        }
+
+        .month-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: .75rem;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            margin: 2px
+        }
+
+        .month-chip .val {
+            font-weight: 700;
+            color: #2563eb
+        }
+
+        .reset-btn {
+            display: inline-block;
+            padding: 8px 24px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            font-size: .9rem;
+            margin: 4px
+        }
+
+        .reset-btn:hover {
+            background: #f1f5f9
+        }
+
+        .reset-btn.danger {
+            border-color: #fca5a5;
+            color: #dc2626
+        }
+
+        .reset-btn.danger:hover {
+            background: #fef2f2
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="center">
+            <h1>🧮 حاسبة المرتب الشهري</h1>
+        </div>
+
+        <div class="card">
+            <div class="nav">
+                <button onclick="changePeriod(-1)">▶</button>
+                <span id="periodLabel"></span>
+                <button onclick="changePeriod(1)">◀</button>
+            </div>
+        </div>
+
+        <div class="legend" id="legend"></div>
+
+        <div class="card">
+            <h2>أيام الشهر</h2>
+            <div class="weekdays" id="weekdays"></div>
+            <div class="cal" id="calendar"></div>
+            <div class="popup" id="popup">
+                <p id="popupLabel"></p>
+                <div class="popup-grid" id="popupGrid"></div>
+            </div>
+        </div>
+
+        <div class="counts" id="counts"></div>
+
+        <div class="card" style="margin-top:16px">
+            <h2>إضافات أخرى</h2>
+            <div class="extras">
+                <div><label>💰 الحافز</label><input type="number" id="bonus" value="0" oninput="save();render()"></div>
+                <div><label>🚌 المواصلات</label><input type="number" id="transport" value="0" oninput="save();render()">
+                </div>
+                <div><label>🎁 السنوي</label><input type="number" id="annual" value="0" oninput="save();render()"></div>
+            </div>
+        </div>
+
+        <!-- Current month total -->
+        <div class="card totals" id="totals"></div>
+
+        <!-- All months grand total -->
+        <div class="card all-total" id="allTotals"></div>
+
+        <div style="text-align:center;margin-top:12px">
+            <button class="reset-btn" onclick="resetMonth()">🔄 مسح الشهر الحالي</button>
+            <button class="reset-btn danger" onclick="resetAll()">🗑️ مسح كل الشهور</button>
+        </div>
+    </div>
+
+    <script>
+        const BASE = 211.538, OT = 158.653;
+        const TYPES = [
+            { value: 'normal', label: 'يوم عادي', hours: 8, meal: 45, cls: 't-normal', icon: '☀️' },
+            { value: 'overtime', label: 'ساعات إضافية', hours: 12, meal: 90, cls: 't-overtime', icon: '🕐' },
+            { value: 'extra', label: 'يوم إضافي', hours: 8, meal: 45, cls: 't-extra', icon: '⭐' },
+            { value: 'extra-overtime', label: 'إضافي + ساعات', hours: 12, meal: 90, cls: 't-extra-overtime', icon: '⚡' }
+        ];
+        const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+        const WDAYS = ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+        const KEY = 'salary-calc-data-v2';
+
+        function calcVal(t) {
+            if (t === 'normal') return BASE + 45;
+            if (t === 'overtime') return BASE + OT + 90;
+            if (t === 'extra') return BASE * 2 + 45;
+            if (t === 'extra-overtime') return BASE * 3 + 90;
+            return 0;
+        }
+
+        let curMonth, curYear, selectedDay = null;
+        // allData: { "2026-0": {days:[...], bonus:0, transport:0, annual:0}, ... }
+        let allData = {};
+
+        function monthKey(m, y) { return y + '-' + m; }
+
+        function init() {
+            const s = load();
+            if (s) { allData = s.allData || {}; curMonth = s.curMonth; curYear = s.curYear; }
+            if (curMonth == null) {
+                const t = new Date(); curMonth = t.getMonth(); curYear = t.getFullYear();
+            }
+            ensureMonth(curMonth, curYear);
+            loadMonthInputs();
+            render();
+        }
+
+        function genDates(m, y) {
+            const ds = [];
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dt = new Date(y, m, i);
+                ds.push(dt.toISOString().split('T')[0]);
+            }
+            return ds;
+        }
+
+        function ensureMonth(m, y) {
+            const k = monthKey(m, y);
+            if (!allData[k]) {
+                allData[k] = { days: genDates(m, y).map(d => ({ date: d, type: '' })), bonus: 0, transport: 0, annual: 0 };
+            }
+        }
+
+        function getCur() { return allData[monthKey(curMonth, curYear)]; }
+
+        function changePeriod(dir) {
+            let nm = curMonth + dir, ny = curYear;
+            if (nm > 11) { nm = 0; ny++; } if (nm < 0) { nm = 11; ny--; }
+            saveMonthInputs();
+            curMonth = nm; curYear = ny;
+            ensureMonth(curMonth, curYear);
+            selectedDay = null;
+            loadMonthInputs();
+            save(); render();
+        }
+
+        function saveMonthInputs() {
+            const d = getCur();
+            d.bonus = +(document.getElementById('bonus').value) || 0;
+            d.transport = +(document.getElementById('transport').value) || 0;
+            d.annual = +(document.getElementById('annual').value) || 0;
+        }
+
+        function loadMonthInputs() {
+            const d = getCur();
+            document.getElementById('bonus').value = d.bonus || 0;
+            document.getElementById('transport').value = d.transport || 0;
+            document.getElementById('annual').value = d.annual || 0;
+        }
+
+        function calcMonthTotal(data) {
+            const daysTotal = data.days.reduce((s, d) => s + calcVal(d.type), 0);
+            return daysTotal + (data.bonus || 0) + (data.transport || 0) + (data.annual || 0);
+        }
+
+        function render() {
+            const data = getCur();
+            // period label
+            document.getElementById('periodLabel').textContent = MONTHS[curMonth] + ' ' + curYear;
+
+            // legend
+            let lg = ''; TYPES.forEach(t => {
+                lg += `<div class="legend-item ${t.cls}">${t.icon} ${t.label}<span class="price">${calcVal(t.value).toFixed(0)} ج</span></div>`;
+            }); document.getElementById('legend').innerHTML = lg;
+
+            // weekdays
+            let wd = ''; WDAYS.forEach(w => { wd += `<div>${w}</div>`; });
+            document.getElementById('weekdays').innerHTML = wd;
+
+            // calendar
+            const days = data.days;
+            const pad = new Date(days[0].date).getDay();
+            let cal = ''; for (let i = 0; i < pad; i++)cal += '<div></div>';
+            days.forEach(d => {
+                const dt = new Date(d.date); const num = dt.getDate();
+                const tc = d.type ? ` type-${d.type}` : '';
+                const sel = selectedDay === d.date ? ' selected' : '';
+                cal += `<div class="day-cell${tc}${sel}" onclick="selectDay('${d.date}')">${num}`;
+                const tp = TYPES.find(t => t.value === d.type);
+                if (tp) cal += `<span class="icon">${tp.icon}</span>`;
+                cal += `</div>`;
+            });
+            document.getElementById('calendar').innerHTML = cal;
+
+            // popup
+            const pop = document.getElementById('popup');
+            if (selectedDay) {
+                pop.classList.add('show');
+                const sd = new Date(selectedDay);
+                document.getElementById('popupLabel').innerHTML = `اختر نوع اليوم: <b>${sd.getDate()}/${sd.getMonth() + 1}</b>`;
+                let pg = ''; TYPES.forEach(t => {
+                    const cur = days.find(d => d.date === selectedDay);
+                    const act = cur?.type === t.value ? ` active ${t.cls}` : '';
+                    pg += `<button class="popup-btn${act}" style="${cur?.type === t.value ? 'color:inherit' : ''}" onclick="setType('${selectedDay}','${t.value}')">
+<span>${t.icon}</span><div><div class="name">${t.label}</div>
+<div class="detail">${t.hours} ساعة • وجبة ${t.meal} • ${calcVal(t.value).toFixed(2)} ج</div></div></button>`;
+                }); document.getElementById('popupGrid').innerHTML = pg;
+            } else { pop.classList.remove('show'); }
+
+            // counts
+            let cc = ''; TYPES.forEach(t => {
+                const cnt = days.filter(d => d.type === t.value).length;
+                cc += `<div class="count-card ${t.cls}"><div><div class="num">${cnt}</div><div class="lbl">${t.label}</div></div></div>`;
+            }); document.getElementById('counts').innerHTML = cc;
+
+            // current month totals
+            const daysTotal = days.reduce((s, d) => s + calcVal(d.type), 0);
+            const b = +(document.getElementById('bonus').value) || 0;
+            const tr = +(document.getElementById('transport').value) || 0;
+            const an = +(document.getElementById('annual').value) || 0;
+            const grand = daysTotal + b + tr + an;
+            document.getElementById('totals').innerHTML = `
+<h2>إجمالي ${MONTHS[curMonth]}</h2>
+<div class="row"><span>مجموع أيام العمل</span><span>${daysTotal.toFixed(2)} جنيه</span></div>
+<div class="row"><span>الحافز + المواصلات + السنوي</span><span>${(b + tr + an).toFixed(2)} جنيه</span></div>
+<div class="row grand"><span>الإجمالي</span><span>${grand.toFixed(2)} جنيه</span></div>`;
+
+            // all months grand total
+            saveMonthInputs();
+            let allGrand = 0;
+            let chips = '';
+            const keys = Object.keys(allData).sort();
+            keys.forEach(k => {
+                const md = allData[k];
+                const mt = calcMonthTotal(md);
+                if (mt > 0) {
+                    const parts = k.split('-');
+                    const mName = MONTHS[+parts[1]];
+                    chips += `<span class="month-chip">${mName} ${parts[0]}: <span class="val">${mt.toFixed(0)} ج</span></span>`;
+                    allGrand += mt;
+                }
+            });
+            if (allGrand > 0) {
+                document.getElementById('allTotals').style.display = 'block';
+                document.getElementById('allTotals').innerHTML = `
+<h2>🏦 المجموع الكلي لكل الشهور</h2>
+<div style="margin-bottom:8px;flex-wrap:wrap;display:flex;gap:4px">${chips}</div>
+<div class="row grand"><span>الإجمالي الكلي</span><span>${allGrand.toFixed(2)} جنيه</span></div>`;
+            } else {
+                document.getElementById('allTotals').style.display = 'none';
+            }
+        }
+
+        function selectDay(date) { selectedDay = selectedDay === date ? null : date; render(); }
+        function setType(date, type) {
+            const data = getCur();
+            data.days = data.days.map(d => d.date === date ? { ...d, type: d.type === type ? '' : type } : d);
+            selectedDay = null; save(); render();
+        }
+        function resetMonth() {
+            const k = monthKey(curMonth, curYear);
+            allData[k] = { days: genDates(curMonth, curYear).map(d => ({ date: d, type: '' })), bonus: 0, transport: 0, annual: 0 };
+            document.getElementById('bonus').value = 0;
+            document.getElementById('transport').value = 0;
+            document.getElementById('annual').value = 0;
+            selectedDay = null; save(); render();
+        }
+        function resetAll() {
+            if (!confirm('هل أنت متأكد من مسح بيانات كل الشهور؟')) return;
+            allData = {};
+            ensureMonth(curMonth, curYear);
+            document.getElementById('bonus').value = 0;
+            document.getElementById('transport').value = 0;
+            document.getElementById('annual').value = 0;
+            selectedDay = null; save(); render();
+        }
+        function save() {
+            saveMonthInputs();
+            localStorage.setItem(KEY, JSON.stringify({ allData, curMonth, curYear }));
+        }
+        function load() { try { const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
+        init();
+    </script>
+</body>
+
+</html>
