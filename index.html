@@ -20,7 +20,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto
         }
 
@@ -93,7 +93,6 @@
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 8px;
             padding: 8px 12px;
             border-radius: 8px;
             border: 1px solid;
@@ -204,6 +203,13 @@
             border-color: rgba(241, 245, 249, .8);
             color: #94a3b8
         }
+
+        .day-cell.type-stop {
+            background: rgba(224, 75, 75, 0.616);
+            border-color: rgba(224, 75, 75, 0.616);
+            color: #000000
+        }
+
 
         .popup {
             margin-top: 12px;
@@ -444,8 +450,10 @@
         <div class="card" style="margin-top:16px">
             <h2>إضافات أخرى</h2>
             <div class="extras">
-                <div><label>💰 الحافز</label><input type="number" id="bonus" value="0" oninput="save();render()"></div>
-                <div><label>🚌 المواصلات</label><input type="number" id="transport" value="0" oninput="save();render()">
+                <div><label>💰 اضافي أخر</label><input type="number" id="bonus" value="0" oninput="save();render()">
+                </div>
+                <div><label>🚌 سلف وخصومات</label><input type="number" id="transport" value="0"
+                        oninput="save();render()">
                 </div>
                 <div><label>🎁 السنوي</label><input type="number" id="annual" value="0" oninput="save();render()"></div>
             </div>
@@ -464,23 +472,30 @@
     </div>
 
     <script>
-        const BASE = 211.538, OT = 158.653;
+        const BASE = 211.538,
+            OT = 158.653,
+            BONUS = 19.23,
+            TRAVEL = 13.84
+            ;
         const TYPES = [
             { value: 'normal', label: 'يوم عادي', hours: 8, meal: 45, cls: 't-normal', icon: '☀️' },
             { value: 'overtime', label: 'ساعات إضافية', hours: 12, meal: 90, cls: 't-overtime', icon: '🕐' },
             { value: 'extra', label: 'يوم إضافي', hours: 8, meal: 45, cls: 't-extra', icon: '⭐' },
             { value: 'extra-overtime', label: 'إضافي + ساعات', hours: 12, meal: 90, cls: 't-extra-overtime', icon: '⚡' },
-            { value: 'holiday', label: 'إجازة', hours: 0, meal: 0, cls: 't-holiday', icon: '🌴' }
+            { value: 'holiday', label: 'إجازة', hours: 0, meal: 0, cls: 't-holiday', icon: '🌴' },
+            { value: 'stop', label: 'توقف', hours: 0, meal: 0, cls: 't-stop', icon: '🚦' }
         ];
         const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
         const WDAYS = ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
         const KEY = 'salary-calc-data-v2';
 
         function calcVal(t) {
-            if (t === 'normal') return BASE + 45;
-            if (t === 'overtime') return BASE + OT + 90;
-            if (t === 'extra') return BASE * 2 + 45;
-            if (t === 'extra-overtime') return BASE * 3 + 90;
+            if (t === 'normal') return BASE + BONUS + TRAVEL + 45;
+            if (t === 'overtime') return BASE + BONUS + TRAVEL + OT + 90;
+            if (t === 'extra') return (BASE * 2) + BONUS + TRAVEL + 45;
+            if (t === 'extra-overtime') return (BASE * 3) + BONUS + TRAVEL + 90;
+            if (t === 'holiday') return 0;
+            if (t === 'stop') return BASE;
             return 0;
         }
 
@@ -534,8 +549,8 @@
         function saveMonthInputs() {
             const d = getCur();
             d.bonus = +(document.getElementById('bonus').value) || 0;
-            d.transport = +(document.getElementById('transport').value) || 0;
             d.annual = +(document.getElementById('annual').value) || 0;
+            d.transport = +(document.getElementById('transport').value) || 0;
         }
 
         function loadMonthInputs() {
@@ -547,7 +562,7 @@
 
         function calcMonthTotal(data) {
             const daysTotal = data.days.reduce((s, d) => s + calcVal(d.type), 0);
-            return daysTotal + (data.bonus || 0) + (data.transport || 0) + (data.annual || 0);
+            return daysTotal + (data.bonus || 0) + (data.annual || 0) - (data.transport || 0);
         }
 
         function render() {
@@ -605,11 +620,11 @@
             const b = +(document.getElementById('bonus').value) || 0;
             const tr = +(document.getElementById('transport').value) || 0;
             const an = +(document.getElementById('annual').value) || 0;
-            const grand = daysTotal + b + tr + an;
+            const grand = daysTotal + b + an - tr;
             document.getElementById('totals').innerHTML = `
 <h2>إجمالي ${MONTHS[curMonth]}</h2>
 <div class="row"><span>مجموع أيام العمل</span><span>${daysTotal.toFixed(2)} جنيه</span></div>
-<div class="row"><span>الحافز + المواصلات + السنوي</span><span>${(b + tr + an).toFixed(2)} جنيه</span></div>
+<div class="row"><span>الحافز + السنوي - السلف والخصومات</span><span>${(b + an - tr).toFixed(2)} جنيه</span></div>
 <div class="row grand"><span>الإجمالي</span><span>${grand.toFixed(2)} جنيه</span></div>`;
 
             // all months grand total
