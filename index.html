@@ -128,6 +128,17 @@
             border-color: rgba(139, 92, 246, .3);
             color: #7c3aed
         }
+        .t-holiday {
+            background: rgba(241, 245, 249, .8);
+            border-color: rgba(241, 220, 251, .8);
+            color: #464646
+        }
+
+        .t-stop {
+            background: rgba(224, 75, 75, 0.397);
+            border-color: rgba(224, 75, 75, 0.39) !important;
+            color: rgba(224, 75, 75)
+        }
 
         .weekdays {
             display: grid;
@@ -203,13 +214,12 @@
             border-color: rgba(241, 245, 249, .8);
             color: #94a3b8
         }
-
         .day-cell.type-stop {
             background: rgba(224, 75, 75, 0.616);
             border-color: rgba(224, 75, 75, 0.616);
             color: #000000
         }
-
+        
 
         .popup {
             margin-top: 12px;
@@ -450,10 +460,8 @@
         <div class="card" style="margin-top:16px">
             <h2>إضافات أخرى</h2>
             <div class="extras">
-                <div><label>💰 اضافي أخر</label><input type="number" id="bonus" value="0" oninput="save();render()">
-                </div>
-                <div><label>🚌 سلف وخصومات</label><input type="number" id="transport" value="0"
-                        oninput="save();render()">
+                <div><label>💰 اضافي أخر</label><input type="number" id="bonus" value="0" oninput="save();render()"></div>
+                <div><label>🚌 سلف وخصومات</label><input type="number" id="transport" value="0" oninput="save();render()">
                 </div>
                 <div><label>🎁 السنوي</label><input type="number" id="annual" value="0" oninput="save();render()"></div>
             </div>
@@ -473,10 +481,10 @@
 
     <script>
         const BASE = 211.538,
-            OT = 158.653,
-            BONUS = 19.23,
-            TRAVEL = 13.84
-            ;
+        OT = 158.653,
+        BONUS = 19.23,
+        TRAVEL = 13.84
+        ;
         const TYPES = [
             { value: 'normal', label: 'يوم عادي', hours: 8, meal: 45, cls: 't-normal', icon: '☀️' },
             { value: 'overtime', label: 'ساعات إضافية', hours: 12, meal: 90, cls: 't-overtime', icon: '🕐' },
