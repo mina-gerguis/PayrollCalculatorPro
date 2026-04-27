@@ -1,8 +1,8 @@
- const BASE = 211.538,
+  const BASE = 211.538,
             OT = 158.653,
             BONUS = 19.23,
-            TRAVEL = 13.84
-            ;
+            TRAVEL = 13.84;
+            
         const TYPES = [
             { value: 'normal', label: 'يوم عادي', hours: 8, meal: 45, cls: 't-normal', icon: '☀️' },
             { value: 'overtime', label: 'ساعات إضافية', hours: 12, meal: 90, cls: 't-overtime', icon: '🕐' },
@@ -26,7 +26,6 @@
         }
 
         let curMonth, curYear, selectedDay = null;
-        // allData: { "2026-0": {days:[...], bonus:0, transport:0, annual:0}, ... }
         let allData = {};
 
         function monthKey(m, y) { return y + '-' + m; }
@@ -39,6 +38,13 @@
             }
             ensureMonth(curMonth, curYear);
             loadMonthInputs();
+            
+            // تحميل الإجمالي المحفوظ من قبل وعرضه
+            const savedTotal = localStorage.getItem("prevMonthTotal");
+            if(savedTotal) {
+                document.getElementById("prevMonthValue").textContent = Number(savedTotal).toFixed(2) + " جنيه";
+            }
+
             render();
         }
 
@@ -93,7 +99,7 @@
 
         function render() {
             const data = getCur();
-            // period label
+            
             document.getElementById('periodLabel').textContent = MONTHS[curMonth] + ' ' + curYear;
 
             // legend
@@ -141,50 +147,75 @@
                 cc += `<div class="count-card ${t.cls}"><div><div class="num">${cnt}</div><div class="lbl">${t.label}</div></div></div>`;
             }); document.getElementById('counts').innerHTML = cc;
 
-            // current month totals
+            // حسبة الشهر الحالي والتفاصيل
             const daysTotal = days.reduce((s, d) => s + calcVal(d.type), 0);
             const b = +(document.getElementById('bonus').value) || 0;
             const tr = +(document.getElementById('transport').value) || 0;
             const an = +(document.getElementById('annual').value) || 0;
-            const grand = daysTotal + b + an - tr;
-            document.getElementById('totals').innerHTML = `
-<h2>إجمالي ${MONTHS[curMonth]}</h2>
-<div class="row"><span>مجموع أيام العمل</span><span>${daysTotal.toFixed(2)} جنيه</span></div>
-<div class="row"><span>الحافز + السنوي - السلف والخصومات</span><span>${(b + an - tr).toFixed(2)} جنيه</span></div>
-<div class="row grand"><span>الإجمالي</span><span>${grand.toFixed(2)} جنيه</span></div>`;
+            const currentNet = daysTotal + b + an - tr;
+
+            document.getElementById('currentMonthBreakdown').innerHTML = `
+                <h2>🧮 تفاصيل حسبة الشهر الحالي</h2>
+                <div class="row"><span>المرتب (أيام العمل)</span><span>${daysTotal.toFixed(2)} ج</span></div>
+                <div class="row"><span>إضافات (آخر + سنوي)</span><span style="color: green;">+ ${(b + an).toFixed(2)} ج</span></div>
+                <div class="row"><span>سلف وخصومات</span><span style="color: red;">- ${tr.toFixed(2)} ج</span></div>
+                <div class="row grand"><h3>صافي الشهر الحالي</h3><span>${currentNet.toFixed(2)} ج</span></div>
+            `;
 
             // all months grand total
             saveMonthInputs();
             let allGrand = 0;
             let chips = '';
-            const keys = Object.keys(allData).sort();
+
+            const keys = Object.keys(allData)
+                .sort((a, b) => {
+                    const [ya, ma] = a.split('-').map(Number);
+                    const [yb, mb] = b.split('-').map(Number);
+                    return ya - yb || ma - mb;
+                });
+
             keys.forEach(k => {
                 const md = allData[k];
                 const mt = calcMonthTotal(md);
-                if (mt > 0) {
-                    const parts = k.split('-');
-                    const mName = MONTHS[+parts[1]];
-                    chips += `<span class="month-chip">${mName} ${parts[0]}: <span class="val">${mt.toFixed(0)} ج</span></span>`;
-                    allGrand += mt;
+                
+                // التأكد من أن الشهر يحتوي على بيانات (سواء أيام مسجلة أو فلوس)
+                const hasData = md.days.some(d => d.type !== '') || Number(md.bonus) > 0 || Number(md.annual) > 0 || Number(md.transport) > 0;
+
+                allGrand += mt; // بنضيف القيمة للإجمالي الكلي في كل الأحوال
+
+                // بنعرض الشهر بس لو فيه بيانات فعلية
+                if (hasData) {
+                    const [year, month] = k.split('-');
+                    const mName = MONTHS[Number(month)];
+
+                    chips += `
+                        <span class="month-chip">
+                            ${mName} ${year} : 
+                            <span class="val">${mt.toFixed(0)} ج</span>
+                        </span>
+                    `;
                 }
             });
-            if (allGrand > 0) {
+            
+            if (chips !== '') {
                 document.getElementById('allTotals').style.display = 'block';
                 document.getElementById('allTotals').innerHTML = `
-<h2>🏦 المجموع الكلي لكل الشهور</h2>
+<h2>🏦 المجموع الكلي </h2>
 <div style="margin-bottom:8px;flex-wrap:wrap;display:flex;gap:4px">${chips}</div>
-<div class="row grand"><span>الإجمالي الكلي</span><span>${allGrand.toFixed(2)} جنيه</span></div>`;
+<div class="row grand"><h3>الإجمالي الكلي</h3><span>${allGrand.toFixed(2)} جنيه</span></div>`;
             } else {
                 document.getElementById('allTotals').style.display = 'none';
             }
         }
 
         function selectDay(date) { selectedDay = selectedDay === date ? null : date; render(); }
+        
         function setType(date, type) {
             const data = getCur();
             data.days = data.days.map(d => d.date === date ? { ...d, type: d.type === type ? '' : type } : d);
             selectedDay = null; save(); render();
         }
+        
         function resetMonth() {
             const k = monthKey(curMonth, curYear);
             allData[k] = { days: genDates(curMonth, curYear).map(d => ({ date: d, type: '' })), bonus: 0, transport: 0, annual: 0 };
@@ -193,6 +224,7 @@
             document.getElementById('annual').value = 0;
             selectedDay = null; save(); render();
         }
+        
         function resetAll() {
             if (!confirm('هل أنت متأكد من مسح بيانات كل الشهور؟')) return;
             allData = {};
@@ -202,75 +234,38 @@
             document.getElementById('annual').value = 0;
             selectedDay = null; save(); render();
         }
+        
         function save() {
             saveMonthInputs();
             localStorage.setItem(KEY, JSON.stringify({ allData, curMonth, curYear }));
         }
+        
         function load() { try { const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
+        
         init();
 
-      function archiveAndReset() {
-    const data = getCur();
-
-    const daysTotal = data.days.reduce((s, d) => s + calcVal(d.type), 0);
-    const b = Number(data.bonus || 0);
-    const tr = Number(data.transport || 0);
-    const an = Number(data.annual || 0);
-
-    const grand = daysTotal + b + an - tr;
-
-    // حفظ نسخة الشهر
-    const key = "month-backup-" + monthKey(curMonth, curYear);
-
-    localStorage.setItem(key, JSON.stringify({
-        month: curMonth,
-        year: curYear,
-        total: grand,
-        days: data.days,
-        bonus: b,
-        transport: tr,
-        annual: an,
-        time: new Date().toISOString()
-    }));
-
-    // حفظ الشهر السابق
-    localStorage.setItem("prevMonthTotal", grand);
-
-    // تحديث الشاشة فورًا
-    document.getElementById("prevMonthValue").textContent =
-        grand.toFixed(2) + " جنيه";
-
-    alert("تم حفظ الشهر وتصفيره بنجاح ✅");
-
-    resetMonth();
-    
-}
-const prev = localStorage.getItem("prevMonthTotal");
-if (prev) {
-    document.getElementById("prevMonthValue").textContent =
-        parseFloat(prev).toFixed(2) + " جنيه";
-}
-
+        function archiveAndReset() {
+            saveMonthInputs(); 
             
+            let allGrand = 0;
+            Object.keys(allData).forEach(k => {
+                allGrand += calcMonthTotal(allData[k]);
+            });
 
+            localStorage.setItem("prevMonthTotal", allGrand);
+            document.getElementById("prevMonthValue").textContent = allGrand.toFixed(2) + " جنيه";
 
-function checkFirstTime() {
-    const name = localStorage.getItem("userName");
+            allData = {};
 
-    if (!name) {
-        document.getElementById("nameModal").style.display = "flex";
-    } else {
-        document.getElementById("userName").value = name;
-    }
-}
-function checkFirstTime() {
-    const name = localStorage.getItem("userName");
+            ensureMonth(curMonth, curYear);
 
-    if (!name || name.trim() === "") {
-        document.getElementById("nameModal").style.display = "flex";
-    } else {
-        document.getElementById("userName").value = name;
-    }
-}
+            document.getElementById('bonus').value = 0;
+            document.getElementById('transport').value = 0;
+            document.getElementById('annual').value = 0;
+            selectedDay = null;
 
+            save();
+            render();
 
+            alert("تم حفظ الإجمالي الكلي وتصفير كل البيانات بنجاح ✅");
+        }
