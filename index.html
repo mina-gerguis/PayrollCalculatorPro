@@ -10,7 +10,6 @@
 
 <body>
 
-    
     <div class="container">
         <div class="card">
             <div class="nav">
@@ -45,22 +44,22 @@
                 <div><label>🎁 السنوي</label><input type="number" id="annual" value="0" oninput="save();render()"></div>
             </div>
         </div>
+        
+        <div class="card totals" id="currentMonthBreakdown"></div>
+
         <div class="card" id="prevMonthTotal">
-            <h2>📦 مرتب الشهر اللي فات</h2>
+            <h2>📦 قبض الشهر اللي فات</h2>
             <div class="row grand">
                 <span>القبض كان :</span>
                 <span style="font-weight: 800;" id="prevMonthValue">0 جنيه</span>
             </div>
         </div>
-        <!-- Current month total -->
-        <div class="card totals" id="totals"></div>
 
-        <!-- All months grand total -->
         <div class="card all-total" id="allTotals"></div>
 
         <div style="text-align:center;margin-top:12px">
-            <button class="reset-btn danger" onclick="resetAll()">🗑️ مسح البانات </button>
-            <button class="reset-btn" onclick="archiveAndReset()">📦 حفظ + وبدء شهر جديد</button>
+            <button class="reset-btn danger" onclick="resetAll()">🗑️ مسح البيانات </button>
+            <button class="reset-btn save" onclick="archiveAndReset()">📦 حفظ + وبدء من جديد</button>
         </div>
     </div>
 
