@@ -1,7 +1,7 @@
-  const BASE = 211.538,
+  const BASE = 240.384,
+            BONUS = 23.07,
             OT = 158.653,
-            BONUS = 19.23,
-            TRAVEL = 13.84;
+            TRAVEL = 20;
             
         const TYPES = [
             { value: 'normal', label: 'يوم عادي', hours: 8, meal: 45, cls: 't-normal', icon: '☀️' },
