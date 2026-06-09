@@ -449,3 +449,9 @@ h3 {
      border-color: #b2a5fc;
     color: #4126dc
 }
+
+@media(min-width:640px) {
+    .extras {
+        grid-template-columns: repeat(4, 1fr) /* تم تغييرها إلى 4 لتناسب الأربع خانات بالتساوي */
+    }
+}
