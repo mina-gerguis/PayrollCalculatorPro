@@ -59,7 +59,7 @@ function genDates(m, y) {
 function ensureMonth(m, y) {
     const k = monthKey(m, y);
     if (!allData[k]) {
-        allData[k] = { days: genDates(m, y).map(d => ({ date: d, type: '' })), bonus: 0, transport: 0, annual: 440, incentive: 400 };
+        allData[k] = { days: genDates(m, y).map(d => ({ date: d, type: '' })), bonus: 0, transport: 0, annual: 0, incentive: 0 };
     }
 }
 
@@ -88,8 +88,8 @@ function loadMonthInputs() {
     const d = getCur();
     document.getElementById('bonus').value = d.bonus || 0;
     document.getElementById('transport').value = d.transport || 0;
-    document.getElementById('annual').value = d.annual !== undefined ? d.annual : 440;
-    document.getElementById('incentive').value = d.incentive !== undefined ? d.incentive : 400;
+    document.getElementById('annual').value = d.annual || 0;
+    document.getElementById('incentive').value = d.incentive || 0;
 }
 
 function calcMonthTotal(data) {
@@ -169,7 +169,7 @@ function render() {
     keys.forEach(k => {
         const md = allData[k];
         const mt = calcMonthTotal(md);
-        const hasData = md.days.some(d => d.type !== '') || Number(md.bonus) > 0 || Number(md.annual) !== 440 || Number(md.incentive) !== 400 || Number(md.transport) > 0;
+        const hasData = md.days.some(d => d.type !== '') || Number(md.bonus) > 0 || Number(md.annual) !== 0 || Number(md.incentive) !== 0 || Number(md.transport) > 0;
         allGrand += mt;
         if (hasData) {
             const [year, month] = k.split('-');
@@ -199,11 +199,11 @@ function setType(date, type) {
 
 function resetMonth() {
     const k = monthKey(curMonth, curYear);
-    allData[k] = { days: genDates(curMonth, curYear).map(d => ({ date: d, type: '' })), bonus: 0, transport: 0, annual: 440, incentive: 400 };
+    allData[k] = { days: genDates(curMonth, curYear).map(d => ({ date: d, type: '' })), bonus: 0, transport: 0, annual: 0, incentive: 0 };
     document.getElementById('bonus').value = 0;
     document.getElementById('transport').value = 0;
-    document.getElementById('annual').value = 440;
-    document.getElementById('incentive').value = 400;
+    document.getElementById('annual').value = 0;
+    document.getElementById('incentive').value = 0;
     selectedDay = null; save(); render();
 }
 
@@ -213,8 +213,8 @@ function resetAll() {
     ensureMonth(curMonth, curYear);
     document.getElementById('bonus').value = 0;
     document.getElementById('transport').value = 0;
-    document.getElementById('annual').value = 440;
-    document.getElementById('incentive').value = 400;
+    document.getElementById('annual').value = 0;
+    document.getElementById('incentive').value = 0;
     selectedDay = null; save(); render();
 }
 
@@ -230,15 +230,22 @@ init();
 function archiveAndReset() {
     saveMonthInputs();
     
-    const data = getCur();
-    const days = data.days;
-    
-    const countNormal = days.filter(d => d.type === 'normal').length;
-    const countOvertime = days.filter(d => d.type === 'overtime').length;
-    const countExtra = days.filter(d => d.type === 'extra').length;
-    const countExtraOvertime = days.filter(d => d.type === 'extra-overtime').length;
-    const countHoliday = days.filter(d => d.type === 'holiday').length;
-    const countStop = days.filter(d => d.type === 'stop').length;
+    let allRegisteredDays = [];
+    Object.keys(allData).forEach(k => {
+        if (allData[k] && allData[k].days) {
+            allRegisteredDays = allRegisteredDays.concat(allData[k].days);
+        }
+    });
+
+    const filteredDays = allRegisteredDays.filter(d => d.type !== '');
+    filteredDays.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const countNormal = filteredDays.filter(d => d.type === 'normal').length;
+    const countOvertime = filteredDays.filter(d => d.type === 'overtime').length;
+    const countExtra = filteredDays.filter(d => d.type === 'extra').length;
+    const countExtraOvertime = filteredDays.filter(d => d.type === 'extra-overtime').length;
+    const countHoliday = filteredDays.filter(d => d.type === 'holiday').length;
+    const countStop = filteredDays.filter(d => d.type === 'stop').length;
     
     const valNormal = countNormal * calcVal('normal');
     const valOvertime = countOvertime * calcVal('overtime');
@@ -250,129 +257,39 @@ function archiveAndReset() {
     let totalNormalHours = (countNormal * 8) + (countExtra * 8);
     let totalOvertimeHours = (countOvertime * 12) + (countExtraOvertime * 12);
     
-    const daysTotal = days.reduce((s, d) => s + calcVal(d.type), 0);
+    const daysTotal = filteredDays.reduce((s, d) => s + calcVal(d.type), 0);
     const b = +(document.getElementById('bonus').value) || 0;
     const tr = +(document.getElementById('transport').value) || 0;
     const an = +(document.getElementById('annual').value) || 0;
     const inc = +(document.getElementById('incentive').value) || 0;
     const currentNet = daysTotal + b + an + inc - tr;
 
-    const printWindow = window.open('', '_blank', 'width=800,height=900');
-    
-    const reportHTML = `
-    <!DOCTYPE html>
-    <html lang="ar" dir="rtl">
-    <head>
-        <meta charset="UTF-8">
-        <title>تقرير راتب تفصيلي - ${MONTHS[curMonth]} ${curYear}</title>
-        <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #333; line-height: 1.6; background: #fff; }
-            .report-card { border: 2px solid #2563eb; border-radius: 15px; padding: 25px; max-width: 700px; margin: 0 auto; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-            .header { text-align: center; border-bottom: 3px double #2563eb; padding-bottom: 15px; margin-bottom: 20px; }
-            .header h1 { margin: 0; color: #2563eb; font-size: 24px; }
-            .header p { margin: 5px 0 0; color: #666; font-size: 14px; }
-            .section-title { font-size: 16px; font-weight: bold; color: #1e293b; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; margin-top: 20px; margin-bottom: 10px; border-right: 4px solid #2563eb; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-            th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: right; font-size: 14px; }
-            th { background-color: #f8fafc; color: #475569; }
-            .row-total { font-weight: bold; background-color: #f8fafc; }
-            .net-salary { text-align: center; margin-top: 25px; padding: 15px; background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 10px; }
-            .net-salary h2 { margin: 0; color: #16a34a; font-size: 22px; }
-            .footer-note { text-align: center; margin-top: 25px; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
-            .designer-credit { text-align: left; margin-top: 15px; font-size: 11px; color: #64748b; font-weight: bold; font-style: italic; }
-            @media print { body { padding: 0; } .report-card { border: none; box-shadow: none; max-width: 100%; } }
-        </style>
-    </head>
-    <body>
-        <div class="report-card">
-            <div class="header">
-                <h1>مفردات وتقفيل الراتب الشهري</h1>
-                <p>الفترة: <b>${MONTHS[curMonth]} / ${curYear}</b></p>
-                <p>تاريخ الاستخراج: ${new Date().toLocaleDateString('ar-EG')}</p>
-            </div>
-
-            <div class="section-title">📊 تفاصيل الأيام، الساعات، والمبالغ</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>بند العمل</th>
-                        <th>عدد الأيام</th>
-                        <th>إجمالي الساعات</th>
-                        <th>المبلغ المستحق</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>☀️ يوم طبيعي</td><td>${countNormal} يوم</td><td>${countNormal * 8} ساعة</td><td>${valNormal.toFixed(2)} ج</td></tr>
-                    <tr><td>🕐 12 ساعة</td><td>${countOvertime} يوم</td><td>${countOvertime * 12} ساعة</td><td>${valOvertime.toFixed(2)} ج</td></tr>
-                    <tr><td>⭐ يوم إضافي</td><td>${countExtra} يوم</td><td>${countExtra * 8} ساعة</td><td>${valExtra.toFixed(2)} ج</td></tr>
-                    <tr><td>⚡ يوم إضافي 12 ساعة</td><td>${countExtraOvertime} يوم</td><td>${countExtraOvertime * 12} ساعة</td><td>${valExtraOvertime.toFixed(2)} ج</td></tr>
-                    <tr><td>🌴 إجازة</td><td>${countHoliday} يوم</td><td>-</td><td>${valHoliday.toFixed(2)} ج</td></tr>
-                    <tr><td>🚦 توقف</td><td>${countStop} يوم</td><td>-</td><td>${valStop.toFixed(2)} ج</td></tr>
-                    <tr class="row-total">
-                        <td>إجمالي أيام وساعات العمل</td>
-                        <td>${days.filter(d => d.type !== '').length} يوم مُسجل</td>
-                        <td>${totalNormalHours + totalOvertimeHours} ساعة</td>
-                        <td>${daysTotal.toFixed(2)} ج</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="section-title">💰 البدلات والإضافات الأخرى والحواسم</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>البند</th>
-                        <th>الحالة / التأثير المالية</th>
-                        <th>القيمة</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>إجمالي حساب الأيام والوجبات</td><td>حساب أساسي</td><td>${daysTotal.toFixed(2)} ج</td></tr>
-                    <tr><td>🚌 بدل مواصلات إضافي</td><td style="color: green;">إضافة للمرتب</td><td>+ ${b.toFixed(2)} ج</td></tr>
-                    <tr><td>💰 يومين الثانوي</td><td style="color: green;">إضافة للمرتب</td><td>+ ${an.toFixed(2)} ج</td></tr>
-                    <tr><td>🎁 الحافز الشهري</td><td style="color: green;">إضافة للمرتب</td><td>+ ${inc.toFixed(2)} ج</td></tr>
-                    <tr><td>🚫 سلف وخصومات</td><td style="color: red;">خصم من المرتب</td><td>- ${tr.toFixed(2)} ج</td></tr>
-                </tbody>
-            </table>
-
-            <div class="net-salary">
-                <h2>صافي القبض المستحق: ${currentNet.toFixed(2)} جنيه مصري</h2>
-            </div>
-
-            <div class="footer-note">
-                تم حفظ البيانات وأرشفة الإجمالي بنجاح في النظام الخاص بك.
-            </div>
-
-            <div class="designer-credit">
-                تصميم: مينا جرجس ©️
-            </div>
-        </div>
-        <script>
-            window.onload = function() { window.print(); window.close(); }
-        </script>
-    </body>
-    </html>`;
-
-    printWindow.document.write(reportHTML);
-    printWindow.document.close();
-
-    let allGrand = 0;
-    Object.keys(allData).forEach(k => {
-        allGrand += calcMonthTotal(allData[k]);
+    let daysTableRows = '';
+    filteredDays.forEach(d => {
+        const tp = TYPES.find(t => t.value === d.type);
+        const dayDate = new Date(d.date);
+        const formattedDate = dayDate.getDate() + '/' + (dayDate.getMonth() + 1) + '/' + dayDate.getFullYear();
+        const dayName = WDAYS[dayDate.getDay()];
+        daysTableRows += `<tr><td>${formattedDate} (${dayName})</td><td>${tp ? tp.icon + ' ' + tp.label : d.type}</td><td>${tp ? tp.hours : 0} ساعة</td><td>${calcVal(d.type).toFixed(2)} ج</td></tr>`;
     });
 
-    localStorage.setItem("prevMonthTotal", allGrand);
-    document.getElementById("prevMonthValue").textContent = allGrand.toFixed(2) + " جنيه";
+    const printWindow = window.open('', '_blank', 'width=850,height=900');
+    printWindow.document.write(`
+    <html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>تقرير الراتب</title><style>body{font-family:Tahoma;padding:20px;}.report-card{border:2px solid #2563eb;padding:20px;border-radius:15px;}.section-title{background:#f1f5f9;padding:5px;margin:15px 0;border-right:4px solid #2563eb;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:right;}.net{text-align:center;font-size:20px;color:green;margin-top:20px;}</style></head>
+    <body><div class="report-card"><h1>تقرير الراتب (دورة 26-25)</h1><table><thead><tr><th>التاريخ</th><th>النوع</th><th>الساعات</th><th>المبلغ</th></tr></thead><tbody>${daysTableRows}</tbody></table>
+    <div class="section-title">ملخص الحسابات</div>
+    <p>إجمالي الأيام: ${daysTotal.toFixed(2)} ج | الإضافات: ${(b+an+inc).toFixed(2)} ج | الخصومات: ${tr.toFixed(2)} ج</p>
+    <div class="net"><h2>صافي القبض: ${currentNet.toFixed(2)} ج</h2></div>
+    <div style="font-size:12px;margin-top:20px;">تصميم: مينا جرجس ©️</div>
+    </div></body></html>`);
+    printWindow.document.close();
 
+    localStorage.setItem("prevMonthTotal", currentNet);
     allData = {};
     ensureMonth(curMonth, curYear);
-
     document.getElementById('bonus').value = 0;
     document.getElementById('transport').value = 0;
-    document.getElementById('annual').value = 440;
-    document.getElementById('incentive').value = 400;
-    selectedDay = null;
-
-    save();
-    render();
+    document.getElementById('annual').value = 0;
+    document.getElementById('incentive').value = 0;
+    save(); render();
 }
